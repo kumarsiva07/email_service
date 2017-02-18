@@ -1,0 +1,14 @@
+syntax = "proto3";
+package email_service;
+
+message Request {
+  string id = 1;
+}
+
+message Response {
+  string id = 1;
+}
+
+service EmailService {
+  rpc Read (Request) returns (Response) {}
+}
