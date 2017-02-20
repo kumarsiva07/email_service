@@ -1,14 +1,23 @@
 syntax = "proto3";
 package email_service;
 
-message Request {
-  string id = 1;
+message Email {
+  string from = 1;
+  repeated string to = 2;
+  string subject = 3;
+  string plain_text = 4;
+  string html_alternate = 5;
+  repeated Attachment attachments = 6;
+  map<string, string> headers = 7;
 }
 
-message Response {
-  string id = 1;
+message Attachment {
+  string filename = 1;
+  bytes body = 2;
 }
+
+message EmailResponse {}
 
 service EmailService {
-  rpc Read (Request) returns (Response) {}
+  rpc Send (Email) returns (EmailResponse) {}
 }

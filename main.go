@@ -4,13 +4,16 @@ import (
 	"google.golang.org/grpc"
 
 	log "github.com/Sirupsen/logrus"
-  "github.com/lileio/email_service/server"
-  "github.com/lileio/email_service/email_service"
+	"github.com/lileio/email_service/email"
+	"github.com/lileio/email_service/email_service"
+	"github.com/lileio/email_service/server"
 	"github.com/lileio/lile"
 )
 
 func main() {
-  s := &server.Server{}
+	go email.Start()
+
+	s := &server.Server{}
 
 	impl := func(g *grpc.Server) {
 		email_service.RegisterEmailServiceServer(g, s)

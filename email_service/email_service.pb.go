@@ -9,8 +9,9 @@ It is generated from these files:
 	email_service.proto
 
 It has these top-level messages:
-	Request
-	Response
+	Email
+	Attachment
+	EmailResponse
 */
 package email_service
 
@@ -34,41 +35,106 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type Request struct {
-	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+type Email struct {
+	From          string            `protobuf:"bytes,1,opt,name=from" json:"from,omitempty"`
+	To            []string          `protobuf:"bytes,2,rep,name=to" json:"to,omitempty"`
+	Subject       string            `protobuf:"bytes,3,opt,name=subject" json:"subject,omitempty"`
+	PlainText     string            `protobuf:"bytes,4,opt,name=plain_text,json=plainText" json:"plain_text,omitempty"`
+	HtmlAlternate string            `protobuf:"bytes,5,opt,name=html_alternate,json=htmlAlternate" json:"html_alternate,omitempty"`
+	Attachments   []*Attachment     `protobuf:"bytes,6,rep,name=attachments" json:"attachments,omitempty"`
+	Headers       map[string]string `protobuf:"bytes,7,rep,name=headers" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 }
 
-func (m *Request) Reset()                    { *m = Request{} }
-func (m *Request) String() string            { return proto.CompactTextString(m) }
-func (*Request) ProtoMessage()               {}
-func (*Request) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *Email) Reset()                    { *m = Email{} }
+func (m *Email) String() string            { return proto.CompactTextString(m) }
+func (*Email) ProtoMessage()               {}
+func (*Email) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *Request) GetId() string {
+func (m *Email) GetFrom() string {
 	if m != nil {
-		return m.Id
+		return m.From
 	}
 	return ""
 }
 
-type Response struct {
-	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+func (m *Email) GetTo() []string {
+	if m != nil {
+		return m.To
+	}
+	return nil
 }
 
-func (m *Response) Reset()                    { *m = Response{} }
-func (m *Response) String() string            { return proto.CompactTextString(m) }
-func (*Response) ProtoMessage()               {}
-func (*Response) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
-
-func (m *Response) GetId() string {
+func (m *Email) GetSubject() string {
 	if m != nil {
-		return m.Id
+		return m.Subject
 	}
 	return ""
 }
+
+func (m *Email) GetPlainText() string {
+	if m != nil {
+		return m.PlainText
+	}
+	return ""
+}
+
+func (m *Email) GetHtmlAlternate() string {
+	if m != nil {
+		return m.HtmlAlternate
+	}
+	return ""
+}
+
+func (m *Email) GetAttachments() []*Attachment {
+	if m != nil {
+		return m.Attachments
+	}
+	return nil
+}
+
+func (m *Email) GetHeaders() map[string]string {
+	if m != nil {
+		return m.Headers
+	}
+	return nil
+}
+
+type Attachment struct {
+	Filename string `protobuf:"bytes,1,opt,name=filename" json:"filename,omitempty"`
+	Body     []byte `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`
+}
+
+func (m *Attachment) Reset()                    { *m = Attachment{} }
+func (m *Attachment) String() string            { return proto.CompactTextString(m) }
+func (*Attachment) ProtoMessage()               {}
+func (*Attachment) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *Attachment) GetFilename() string {
+	if m != nil {
+		return m.Filename
+	}
+	return ""
+}
+
+func (m *Attachment) GetBody() []byte {
+	if m != nil {
+		return m.Body
+	}
+	return nil
+}
+
+type EmailResponse struct {
+}
+
+func (m *EmailResponse) Reset()                    { *m = EmailResponse{} }
+func (m *EmailResponse) String() string            { return proto.CompactTextString(m) }
+func (*EmailResponse) ProtoMessage()               {}
+func (*EmailResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
 func init() {
-	proto.RegisterType((*Request)(nil), "email_service.Request")
-	proto.RegisterType((*Response)(nil), "email_service.Response")
+	proto.RegisterType((*Email)(nil), "email_service.Email")
+	proto.RegisterType((*Attachment)(nil), "email_service.Attachment")
+	proto.RegisterType((*EmailResponse)(nil), "email_service.EmailResponse")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -82,7 +148,7 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for EmailService service
 
 type EmailServiceClient interface {
-	Read(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
+	Send(ctx context.Context, in *Email, opts ...grpc.CallOption) (*EmailResponse, error)
 }
 
 type emailServiceClient struct {
@@ -93,9 +159,9 @@ func NewEmailServiceClient(cc *grpc.ClientConn) EmailServiceClient {
 	return &emailServiceClient{cc}
 }
 
-func (c *emailServiceClient) Read(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := grpc.Invoke(ctx, "/email_service.EmailService/Read", in, out, c.cc, opts...)
+func (c *emailServiceClient) Send(ctx context.Context, in *Email, opts ...grpc.CallOption) (*EmailResponse, error) {
+	out := new(EmailResponse)
+	err := grpc.Invoke(ctx, "/email_service.EmailService/Send", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -105,27 +171,27 @@ func (c *emailServiceClient) Read(ctx context.Context, in *Request, opts ...grpc
 // Server API for EmailService service
 
 type EmailServiceServer interface {
-	Read(context.Context, *Request) (*Response, error)
+	Send(context.Context, *Email) (*EmailResponse, error)
 }
 
 func RegisterEmailServiceServer(s *grpc.Server, srv EmailServiceServer) {
 	s.RegisterService(&_EmailService_serviceDesc, srv)
 }
 
-func _EmailService_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Request)
+func _EmailService_Send_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Email)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EmailServiceServer).Read(ctx, in)
+		return srv.(EmailServiceServer).Send(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/email_service.EmailService/Read",
+		FullMethod: "/email_service.EmailService/Send",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EmailServiceServer).Read(ctx, req.(*Request))
+		return srv.(EmailServiceServer).Send(ctx, req.(*Email))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -135,8 +201,8 @@ var _EmailService_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*EmailServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Read",
-			Handler:    _EmailService_Read_Handler,
+			MethodName: "Send",
+			Handler:    _EmailService_Send_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -146,14 +212,26 @@ var _EmailService_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("email_service.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 129 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x4e, 0xcd, 0x4d, 0xcc,
-	0xcc, 0x89, 0x2f, 0x4e, 0x2d, 0x2a, 0xcb, 0x4c, 0x4e, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17,
-	0xe2, 0x45, 0x11, 0x54, 0x92, 0xe4, 0x62, 0x0f, 0x4a, 0x2d, 0x2c, 0x4d, 0x2d, 0x2e, 0x11, 0xe2,
-	0xe3, 0x62, 0xca, 0x4c, 0x91, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x0c, 0x62, 0xca, 0x4c, 0x51, 0x92,
-	0xe2, 0xe2, 0x08, 0x4a, 0x2d, 0x2e, 0xc8, 0xcf, 0x2b, 0x4e, 0x45, 0x97, 0x33, 0xf2, 0xe4, 0xe2,
-	0x71, 0x05, 0x99, 0x13, 0x0c, 0x31, 0x46, 0xc8, 0x92, 0x8b, 0x25, 0x28, 0x35, 0x31, 0x45, 0x48,
-	0x4c, 0x0f, 0xd5, 0x4e, 0xa8, 0xd9, 0x52, 0xe2, 0x18, 0xe2, 0x10, 0x83, 0x95, 0x18, 0x92, 0xd8,
-	0xc0, 0xee, 0x32, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0x8f, 0xe7, 0x88, 0x02, 0xae, 0x00, 0x00,
-	0x00,
+	// 322 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x6c, 0x91, 0x3d, 0x6f, 0xfa, 0x40,
+	0x0c, 0xc6, 0xff, 0x24, 0xbc, 0xfc, 0x31, 0x2f, 0xad, 0x5c, 0x86, 0x2b, 0x6a, 0x25, 0x1a, 0xa9,
+	0x12, 0x13, 0x03, 0x5d, 0x2a, 0x60, 0x61, 0x40, 0xea, 0xd0, 0x29, 0x74, 0x47, 0x07, 0x18, 0x91,
+	0x36, 0xb9, 0x43, 0x89, 0x41, 0xf0, 0xf1, 0xfa, 0xcd, 0xaa, 0x38, 0x84, 0x42, 0xc5, 0x66, 0xff,
+	0xee, 0x79, 0x2c, 0x3f, 0x3e, 0xb8, 0xa3, 0x48, 0x07, 0xe1, 0x2c, 0xa1, 0x78, 0x17, 0x2c, 0xa8,
+	0xb7, 0x89, 0x2d, 0x5b, 0x6c, 0x5c, 0x40, 0xef, 0xdb, 0x81, 0xd2, 0x24, 0x25, 0x88, 0x50, 0x5c,
+	0xc5, 0x36, 0x52, 0x85, 0x4e, 0xa1, 0x5b, 0xf5, 0xa5, 0xc6, 0x26, 0x38, 0x6c, 0x95, 0xd3, 0x71,
+	0xbb, 0x55, 0xdf, 0x61, 0x8b, 0x0a, 0x2a, 0xc9, 0x76, 0xfe, 0x49, 0x0b, 0x56, 0xae, 0xc8, 0xf2,
+	0x16, 0x1f, 0x01, 0x36, 0xa1, 0x0e, 0xcc, 0x8c, 0x69, 0xcf, 0xaa, 0x28, 0x8f, 0x55, 0x21, 0x1f,
+	0xb4, 0x67, 0x7c, 0x86, 0xe6, 0x9a, 0xa3, 0x70, 0xa6, 0x43, 0xa6, 0xd8, 0x68, 0x26, 0x55, 0x12,
+	0x49, 0x23, 0xa5, 0xe3, 0x1c, 0xe2, 0x10, 0x6a, 0x9a, 0x59, 0x2f, 0xd6, 0x11, 0x19, 0x4e, 0x54,
+	0xb9, 0xe3, 0x76, 0x6b, 0xfd, 0xfb, 0xde, 0x65, 0x8e, 0xf1, 0x49, 0xe1, 0x9f, 0xab, 0x71, 0x08,
+	0x95, 0x35, 0xe9, 0x25, 0xc5, 0x89, 0xaa, 0x88, 0xf1, 0xe9, 0x8f, 0x51, 0x72, 0xf6, 0xde, 0x32,
+	0xcd, 0xc4, 0x70, 0x7c, 0xf0, 0x73, 0x47, 0x7b, 0x00, 0xf5, 0xf3, 0x07, 0xbc, 0x05, 0xf7, 0x8b,
+	0x0e, 0xc7, 0x63, 0xa4, 0x25, 0xb6, 0xa0, 0xb4, 0xd3, 0xe1, 0x96, 0x94, 0x23, 0x2c, 0x6b, 0x06,
+	0xce, 0x6b, 0xc1, 0x1b, 0x01, 0xfc, 0xee, 0x84, 0x6d, 0xf8, 0xbf, 0x0a, 0x42, 0x32, 0x3a, 0xa2,
+	0xa3, 0xfd, 0xd4, 0xa7, 0x37, 0x9e, 0xdb, 0xe5, 0x41, 0x46, 0xd4, 0x7d, 0xa9, 0xbd, 0x1b, 0x68,
+	0xc8, 0x62, 0x3e, 0x25, 0x1b, 0x6b, 0x12, 0xea, 0xbf, 0x43, 0x5d, 0xc0, 0x34, 0x5b, 0x1b, 0x47,
+	0x50, 0x9c, 0x92, 0x59, 0x62, 0xeb, 0x5a, 0x9c, 0xf6, 0xc3, 0x35, 0x9a, 0xcf, 0xf2, 0xfe, 0xcd,
+	0xcb, 0xf2, 0xed, 0x2f, 0x3f, 0x01, 0x00, 0x00, 0xff, 0xff, 0xb5, 0x4b, 0x15, 0xff, 0x0d, 0x02,
+	0x00, 0x00,
 }
