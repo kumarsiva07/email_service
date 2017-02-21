@@ -6,27 +6,34 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-
-	"github.com/go-gomail/gomail"
+	"github.com/arbarlow/gomail"
 )
 
-type Email struct {
-	Message      *gomail.Message
-	ResponseChan chan EmailResponse
+type Dialer interface {
+	Dial() (gomail.SendCloser, error)
 }
 
-type EmailResponse struct {
-	Error error
+type email struct {
+	message  *gomail.Message
+	response chan response
+}
+
+type response struct {
+	error error
 }
 
 var (
-	Sender     gomail.SendCloser
-	Open       = false
-	EmailQueue = make(chan Email)
-	CloseTime  = time.Duration(30)
+	CloseTime = time.Duration(30)
+
+	sender gomail.SendCloser
+	dialer Dialer
+	port   int
+
+	queue = make(chan email)
+	open  = false
 )
 
-func Start() {
+func init() {
 	if os.Getenv("SMTP_HOST") == "" {
 		os.Setenv("SMTP_HOST", "localhost")
 	}
@@ -35,50 +42,79 @@ func Start() {
 		os.Setenv("SMTP_PORT", "25")
 	}
 
+	var err error
 	port, err := strconv.Atoi(os.Getenv("SMTP_PORT"))
 	if err != nil {
 		log.Fatal("Could not parse SMTP_PORT into an integer")
 	}
 
-	d := gomail.NewDialer(
+	dialer = gomail.NewDialer(
 		os.Getenv("SMTP_HOST"),
 		port,
 		os.Getenv("SMTP_USERNAME"),
 		os.Getenv("SMTP_PASSWORD"))
+}
 
+func Start() {
 	for {
 		select {
-		case m := <-EmailQueue:
-			if !Open {
-				if Sender, err = d.Dial(); err != nil {
-					log.Error(err)
-					m.ResponseChan <- EmailResponse{Error: err}
-					break
-				}
+		case m := <-queue:
+			err := connect()
+			if err != nil {
+				log.Errorf("SMTP connection error: %v", err)
 
-				log.Debug("Connected to SMTP server made")
-				Open = true
-			}
-
-			t := time.Now()
-			if err := gomail.Send(Sender, m.Message); err != nil {
-				log.Error(err)
-				m.ResponseChan <- EmailResponse{Error: err}
+				m.response <- response{error: err}
 				break
 			}
 
-			m.ResponseChan <- EmailResponse{}
-			log.Debugf("Time = %+v\n", time.Since(t))
-
-		// Close the connection to the SMTP server if no email was sent in
-		// the last 30 seconds.
-		case <-time.After(CloseTime * time.Second):
-			if Open {
-				if err := Sender.Close(); err != nil {
-					log.Error(err)
-				}
-				Open = false
+			if err := gomail.Send(sender, m.message); err != nil {
+				log.Errorf("Sending email failed: %v", err)
+				m.response <- response{error: err}
+				break
 			}
+
+			m.response <- response{}
+		case <-time.After(CloseTime * time.Second):
+			log.Debug("Closing connection due to inactivity")
+			closeConn()
 		}
+	}
+}
+
+func SendMessage(m *gomail.Message) error {
+	res := make(chan response)
+
+	queue <- email{
+		message:  m,
+		response: res,
+	}
+
+	r := <-res
+	return r.error
+}
+
+func SetDialerAndSender(d Dialer, s gomail.SendCloser) {
+	dialer = d
+	sender = s
+}
+
+func connect() error {
+	if !open {
+		var err error
+		if sender, err = dialer.Dial(); err != nil {
+			return err
+		}
+
+		open = true
+	}
+	return nil
+}
+
+func closeConn() {
+	if open {
+		if err := sender.Close(); err != nil {
+			log.Error(err)
+		}
+		open = false
 	}
 }

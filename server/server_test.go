@@ -5,6 +5,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/arbarlow/gomail"
 	"github.com/lileio/email_service/email"
 	"github.com/lileio/email_service/email_service"
 	"github.com/stretchr/testify/assert"
@@ -24,14 +25,26 @@ func (m MockSender) Send(from string, to []string, msg io.WriterTo) error {
 	return nil
 }
 
+type MockDialer struct {
+	mock.Mock
+	Sender MockSender
+}
+
+func (m MockDialer) Dial() (gomail.SendCloser, error) {
+	m.Called()
+	return m.Sender, nil
+}
+
 var s = Server{}
 
 func TestBasicSend(t *testing.T) {
-	mock := MockSender{}
-	mock.On("Send").Return(nil)
+	sender := MockSender{}
+	sender.On("Send").Return(nil)
 
-	email.Open = true
-	email.Sender = mock
+	dialer := MockDialer{Sender: sender}
+	dialer.On("Dial").Return(nil, nil)
+
+	email.SetDialerAndSender(&dialer, sender)
 	go email.Start()
 
 	ctx := context.Background()
@@ -45,7 +58,13 @@ func TestBasicSend(t *testing.T) {
 
 	res, err := s.Send(ctx, req)
 
-	mock.AssertExpectations(t)
+	dialer.AssertExpectations(t)
+	sender.AssertExpectations(t)
+
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 }
+
+func TestAlternate(t *testing.T)  {}
+func TestAttachment(t *testing.T) {}
+func TestError(t *testing.T)      {}

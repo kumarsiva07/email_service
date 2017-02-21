@@ -3,7 +3,7 @@ package server
 import (
 	context "golang.org/x/net/context"
 
-	"github.com/go-gomail/gomail"
+	"github.com/arbarlow/gomail"
 	"github.com/lileio/email_service/email"
 	"github.com/lileio/email_service/email_service"
 )
@@ -27,16 +27,9 @@ func (s Server) Send(ctx context.Context, r *email_service.Email) (*email_servic
 		m.SetHeader(k, v)
 	}
 
-	resChan := make(chan email.EmailResponse)
-
-	email.EmailQueue <- email.Email{
-		Message:      m,
-		ResponseChan: resChan,
-	}
-
-	res := <-resChan
-	if res.Error != nil {
-		return nil, res.Error
+	err := email.SendMessage(m)
+	if err != nil {
+		return nil, err
 	}
 
 	return &email_service.EmailResponse{}, nil

@@ -12,6 +12,7 @@ import (
 
 func main() {
 	go email.Start()
+	log.SetLevel(log.DebugLevel)
 
 	s := &server.Server{}
 
