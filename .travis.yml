@@ -10,9 +10,9 @@ script:
   - go get -t ./...
   - make test
 
-# after_success:
-#   - if [ "$TRAVIS_BRANCH" == "master" ]; then
-#     make docker;
-#     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
-#     docker push lileio/email_service;
-#     fi
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+    make docker;
+    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+    docker push lileio/email_service;
+    fi
