@@ -3,6 +3,7 @@ package email
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -67,15 +68,22 @@ func Start() {
 				break
 			}
 
+			t := time.Now()
 			if err := gomail.Send(sender, m.message); err != nil {
 				log.Errorf("Sending email failed: %v", err)
+
+				// Close the connection, so that the next send can reconnect
+				if strings.Contains(err.Error(), "timed out") {
+					closeConn()
+				}
+
 				m.response <- response{error: err}
 				break
 			}
+			log.Debugf("Sent email in %s", time.Since(t))
 
 			m.response <- response{}
 		case <-time.After(CloseTime * time.Second):
-			log.Debug("Closing connection due to inactivity")
 			closeConn()
 		}
 	}
@@ -112,8 +120,11 @@ func connect() error {
 
 func closeConn() {
 	if open {
+		log.Debug("Closing STMP connection")
 		if err := sender.Close(); err != nil {
-			log.Error(err)
+			if !strings.Contains(err.Error(), "broken pipe") {
+				log.Error(err)
+			}
 		}
 		open = false
 	}

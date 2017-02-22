@@ -1,6 +1,8 @@
 package server
 
 import (
+	"bytes"
+
 	context "golang.org/x/net/context"
 
 	"github.com/arbarlow/gomail"
@@ -21,6 +23,10 @@ func (s Server) Send(ctx context.Context, r *email_service.Email) (*email_servic
 
 	if r.HtmlAlternate != "" {
 		m.AddAlternative("text/html", r.HtmlAlternate)
+	}
+
+	for _, a := range r.Attachments {
+		m.AttachReader(a.Filename, bytes.NewReader(a.Body))
 	}
 
 	for k, v := range r.Headers {
