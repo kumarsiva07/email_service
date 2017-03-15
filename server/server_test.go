@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/arbarlow/gomail"
+	"github.com/lileio/email_service"
 	"github.com/lileio/email_service/email"
-	"github.com/lileio/email_service/email_service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

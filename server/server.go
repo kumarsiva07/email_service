@@ -6,8 +6,8 @@ import (
 	context "golang.org/x/net/context"
 
 	"github.com/arbarlow/gomail"
+	"github.com/lileio/email_service"
 	"github.com/lileio/email_service/email"
-	"github.com/lileio/email_service/email_service"
 )
 
 type Server struct {
