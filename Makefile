@@ -9,6 +9,10 @@ proto:
 test:
 	go test -v ./...
 
+ci:
+	go get -v -t ./...
+	make test
+
 benchmark:
 	go test -bench=. -benchmem -benchtime 10s
 
