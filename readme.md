@@ -23,7 +23,7 @@ docker pull lileio/email_service
 You can set SMTP details with the following env vars.
 
 ```
-SMTP_HOST=smtp.sendgrid.com
+SMTP_HOST=smtp.sendgrid.net
 SMTP_PORT=2525
 SMTP_USERNAME=apikey
 SMTP_PASSWORD=somepassword
