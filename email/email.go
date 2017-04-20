@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/arbarlow/gomail"
+	log "github.com/sirupsen/logrus"
 )
 
 type Dialer interface {
